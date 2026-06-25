@@ -3,13 +3,10 @@
 #include <WiFi.h>
 
 #include "config.h"
+#include "nut_logic.h"
 #include "ups_state.h"
 
 static WiFiServer nutServer(3493);
-
-static bool isSupportedUpsName(const String &upsName) {
-  return upsName == UPS_NAME || upsName == UPS_LEGACY_NAME;
-}
 
 static String commandPrefix(const String &command, const String &upsName) {
   return command + " " + upsName;
@@ -17,22 +14,6 @@ static String commandPrefix(const String &command, const String &upsName) {
 
 static String commandPrefixWithVar(const String &command, const String &upsName) {
   return commandPrefix(command, upsName) + " ";
-}
-
-static String nutVarValue(const String &varName, const UpsState &state) {
-  if (varName == "device.mfr") return "DIY";
-  if (varName == "device.model") return "ESP32-C3 GPIO UPS";
-  if (varName == "device.type") return "ups";
-  if (varName == "driver.name") return "esp32-gpio";
-  if (varName == "driver.version") return "0.1.0";
-  if (varName == "ups.mfr") return "DIY";
-  if (varName == "ups.model") return "ESP32-C3 GPIO UPS";
-  if (varName == "ups.status") return upsStatus(state);
-  if (varName == "ups.test.result") return "No test initiated";
-  if (varName == "battery.charge") return state.redLed ? "50" : "100";
-  if (varName == "battery.runtime") return state.redLed ? "600" : "1200";
-  if (varName == "input.voltage") return state.redLed ? "0" : "230";
-  return "";
 }
 
 static void nutSendVar(WiFiClient &client, const String &varName, const UpsState &state) {
@@ -46,23 +27,9 @@ static void nutSendVar(WiFiClient &client, const String &varName, const UpsState
 }
 
 static void nutListVars(WiFiClient &client, const UpsState &state) {
-  static const char *vars[] = {
-      "device.mfr",
-      "device.model",
-      "device.type",
-      "driver.name",
-      "driver.version",
-      "ups.mfr",
-      "ups.model",
-      "ups.status",
-      "ups.test.result",
-      "battery.charge",
-      "battery.runtime",
-      "input.voltage",
-  };
-
   client.printf("BEGIN LIST VAR %s\n", UPS_NAME);
-  for (const char *varName : vars) {
+  for (size_t i = 0; i < nutVarCount(); i++) {
+    const char *varName = nutVarNameAt(i);
     const String value = nutVarValue(varName, state);
     client.printf("VAR %s %s \"%s\"\n", UPS_NAME, varName, value.c_str());
   }

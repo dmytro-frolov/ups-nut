@@ -6,6 +6,7 @@
 #include "ups_state.h"
 #include "wifi_setup.h"
 
+#ifndef UNIT_TEST
 void setup() {
   Serial.begin(115200);
   delay(500);
@@ -23,7 +24,9 @@ void setup() {
 }
 
 void loop() {
+  handleWifi();
   handleHttpApi();
   handleNutServer();
   handleOtaUpdate();
 }
+#endif
