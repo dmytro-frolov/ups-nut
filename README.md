@@ -36,9 +36,8 @@ UPS LED signals -> optocouplers -> GPIO pins
 The ESP32 does not control the UPS. It only observes the UPS state and reports
 it over the network:
 
-- green LED means line power is available: `OL`
 - red LED means the UPS is on battery: `OB DISCHRG`
-- green + yellow means line power is available and charging: `OL CHRG`
+- red LED off means line power is treated as available: `OL`
 
 When QNAP sees `OB DISCHRG`, it can enter auto-protection or shut down after the
 configured delay.
@@ -74,22 +73,20 @@ Pins use `INPUT_PULLUP`. Short a pin to `GND` to activate it.
 
 | GPIO | Simulated UPS LED | NUT status effect |
 | --- | --- | --- |
-| `GPIO4` | Green | `OL` |
-| `GPIO5` | Yellow | `OFF`, or `OL CHRG` together with green |
+| `GPIO4` | Green | Observed by `/status`, not used for `ups.status` |
+| `GPIO5` | Yellow | Observed by `/status`, not used for `ups.status` |
 | `GPIO6` | Red | `OB DISCHRG` |
 
 Observed EnerGenie EG-UPS-B650 mapping:
 
 | UPS LEDs | Meaning | NUT status |
 | --- | --- | --- |
-| Green on | Input power is present, battery not charging | `OL` |
-| Green on, yellow blinking/on | Input power is present, battery charging | `OL CHRG` |
+| Red off | AC power is treated as present | `OL` |
 | Red on, beeping | Input power is lost, running on battery | `OB DISCHRG` |
-| Yellow on, green off after pressing UPS power button | UPS output appears off | `OFF` |
 
 For a minimum useful setup, connect only the red LED state. That is enough to
-tell clients that AC power has failed. Green and yellow improve the status
-display but are not required for timed shutdown.
+tell clients that AC power has failed. Green and yellow are still visible in
+`/status`, but they do not affect the NUT status.
 
 ## QNAP setup
 
@@ -164,6 +161,32 @@ pio device monitor
 ```
 
 The serial monitor prints the ESP32 IP address.
+
+## OTA upload
+
+OTA is enabled after the first USB flash. The OTA hostname is:
+
+```text
+esp32-ups-nut.local
+```
+
+Upload over Wi-Fi with PlatformIO:
+
+```sh
+pio run -e esp32-c3-devkitm-1-ota -t upload
+```
+
+If mDNS does not resolve on your network, replace `upload_port` in
+`platformio.ini` with the ESP32 IP address.
+
+Optional OTA password:
+
+```cpp
+#define OTA_PASSWORD "change-me"
+```
+
+If you enable it in `src/secrets.h`, also uncomment the matching
+`upload_flags` in `platformio.ini`.
 
 ## Test from a Mac
 

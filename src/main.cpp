@@ -2,6 +2,7 @@
 
 #include "http_api.h"
 #include "nut_server.h"
+#include "ota_update.h"
 #include "ups_state.h"
 #include "wifi_setup.h"
 
@@ -14,12 +15,15 @@ void setup() {
 
   setupHttpApi();
   setupNutServer();
+  setupOtaUpdate();
 
   Serial.println("HTTP server: port 80");
   Serial.println("NUT server: port 3493, UPS name: qnapups");
+  Serial.println("OTA hostname: esp32-ups-nut");
 }
 
 void loop() {
   handleHttpApi();
   handleNutServer();
+  handleOtaUpdate();
 }

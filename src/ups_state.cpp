@@ -20,11 +20,5 @@ String upsStatus(const UpsState &state) {
   if (state.redLed) {
     return "OB DISCHRG";
   }
-  if (state.greenLed && state.yellowLed) {
-    return "OL CHRG";
-  }
-  if (state.yellowLed) {
-    return "OFF";
-  }
   return "OL";
 }
